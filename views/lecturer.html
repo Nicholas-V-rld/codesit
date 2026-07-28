@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard · CodeSit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="wordmark wordmark--light">Code<span class="spark">.</span>Sit</div>
+    <div class="topbar__right">
+      <span class="topbar__user">Signed in as <b id="whoami">…</b></span>
+      <button class="btn btn-ink btn-sm" id="logoutBtn">Log out</button>
+    </div>
+  </header>
+
+  <div class="page">
+    <section class="scope-card">
+      <div class="metric"><div class="n" id="mDept">—</div><div class="l">Department</div></div>
+      <div class="divider"></div>
+      <div class="metric">
+        <div class="l" style="margin-bottom:6px">Levels you teach</div>
+        <div class="taglevels" id="mLevels"></div>
+      </div>
+      <div class="divider"></div>
+      <div class="metric"><div class="n" id="mStudents">0</div><div class="l">Students</div></div>
+      <div class="divider"></div>
+      <div class="metric"><div class="n" id="mSubs">0</div><div class="l">Submissions</div></div>
+    </section>
+
+    <div class="stat-grid" id="statGrid"></div>
+
+    <section class="card">
+      <div class="card__head">
+        <span class="card__title">Student submissions</span>
+        <button class="btn btn-ghost btn-sm" id="refreshBtn">↻ Refresh</button>
+      </div>
+      <div class="card__body">
+        <div class="filters" id="filters"></div>
+        <table>
+          <thead>
+            <tr><th>Student</th><th>Level</th><th>Title</th><th>Language</th><th>Submitted</th><th></th></tr>
+          </thead>
+          <tbody id="subBody"><tr><td colspan="6"><div class="empty">Loading…</div></td></tr></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <div class="modal" id="modal">
+    <div class="modal__box">
+      <div class="modal__head">
+        <h3>Submission</h3>
+        <button class="x" id="closeModal">✕</button>
+      </div>
+      <div class="modal__body">
+        <div class="detail-grid">
+          <div><div class="k">Student</div><div class="v" id="dName">—</div></div>
+          <div><div class="k">Matric</div><div class="v" id="dMatric">—</div></div>
+          <div><div class="k">Level</div><div class="v" id="dLevel">—</div></div>
+          <div><div class="k">Language</div><div class="v" id="dLang">—</div></div>
+          <div><div class="k">Submitted</div><div class="v" id="dWhen">—</div></div>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center; margin-bottom:12px">
+          <button class="btn btn-run btn-sm" id="verifyBtn">▶ Run to verify</button>
+          <span class="statusbar state-ready" id="mStatus" style="border-radius:8px; flex:0 0 auto">
+            <span class="dot"></span><span id="mStatusText">not run yet</span>
+          </span>
+        </div>
+        <div class="modal-editor-host"><div id="modalEditor"></div></div>
+        <div class="console" id="modalConsole" style="border-radius:9px; margin-top:12px">
+          <span class="muted">Run the code to verify the student's output.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
+  <script src="/js/lecturer.js"></script>
+</body>
+</html>

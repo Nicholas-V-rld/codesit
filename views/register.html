@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Create account · CodeSit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div class="auth">
+    <aside class="auth__brand">
+      <div class="wordmark wordmark--light">Code<span class="spark">.</span>Sit</div>
+      <div class="auth__pitch">
+        <h1>One account. Your department, your level.</h1>
+        <p>Students write and submit code. Lecturers see only the students they teach.</p>
+      </div>
+      <div class="auth__term">
+        <span class="c"># access is scoped</span><br />
+        lecturer → <span class="g">Computer Science · ND1, ND2</span><br />
+        sees → <span class="g">only those students</span>
+      </div>
+    </aside>
+
+    <main class="auth__panel">
+      <div class="auth__card">
+        <h2>Create your account</h2>
+        <p class="sub">Tell us who you are so we can place you correctly.</p>
+        <div class="roletabs">
+          <div class="roletab on" data-role="student">I'm a student</div>
+          <div class="roletab" data-role="lecturer">I'm a lecturer</div>
+        </div>
+        <div id="alert" class="alert alert-error"></div>
+        <form id="regForm" novalidate>
+          <div class="field">
+            <label for="full_name">Full name</label>
+            <input class="input" id="full_name" />
+          </div>
+          <div class="row-2">
+            <div class="field">
+              <label for="username">Username</label>
+              <input class="input" id="username" autocomplete="username" />
+            </div>
+            <div class="field">
+              <label for="password">Password</label>
+              <input class="input" id="password" type="password" autocomplete="new-password" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="department">Department</label>
+            <select class="input" id="department"></select>
+          </div>
+
+          <div class="student-only">
+            <div class="row-2">
+              <div class="field">
+                <label for="matric_number">Matric number</label>
+                <input class="input" id="matric_number" placeholder="e.g. CS/ND/2024/045" />
+              </div>
+              <div class="field">
+                <label for="level">Level</label>
+                <select class="input" id="level"></select>
+              </div>
+            </div>
+          </div>
+
+          <div class="lecturer-only" style="display:none">
+            <div class="field">
+              <label for="staff_id">Staff ID</label>
+              <input class="input" id="staff_id" placeholder="e.g. STAFF/CS/001" />
+            </div>
+            <div class="field">
+              <label>Levels you teach</label>
+              <div class="checks" id="teachLevels"></div>
+              <p class="hint">Pick every level you take. You'll only see students in these levels.</p>
+            </div>
+          </div>
+
+          <button class="btn btn-primary btn-block" type="submit" id="submitBtn">Create account</button>
+        </form>
+        <p class="auth__foot">Already registered? <a href="/login">Sign in</a></p>
+      </div>
+    </main>
+  </div>
+  <script src="/js/auth.js"></script>
+</body>
+</html>

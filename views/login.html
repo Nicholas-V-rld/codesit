@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign in · CodeSit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div class="auth">
+    <aside class="auth__brand">
+      <div class="wordmark wordmark--light">Code<span class="spark">.</span>Sit</div>
+      <div class="auth__pitch">
+        <h1>Write code. Run it. Sit the exam.</h1>
+        <p>A coding examination platform where you solve problems in a real editor — not on paper.</p>
+      </div>
+      <div class="auth__term">
+        <span class="c"># your code runs for real</span><br />
+        <span class="k">def</span> solve(n):<br />
+        &nbsp;&nbsp;<span class="k">return</span> n * n<br /><br />
+        <span class="c">&gt;</span> <span class="g">exit 0 · 0.21s</span>
+      </div>
+    </aside>
+
+    <main class="auth__panel">
+      <div class="auth__card">
+        <h2>Welcome back</h2>
+        <p class="sub">Sign in to your CodeSit account.</p>
+        <div id="alert" class="alert alert-error"></div>
+        <form id="loginForm" novalidate>
+          <div class="field">
+            <label for="username">Username</label>
+            <input class="input" id="username" autocomplete="username" autofocus />
+          </div>
+          <div class="field">
+            <label for="password">Password</label>
+            <input class="input" id="password" type="password" autocomplete="current-password" />
+          </div>
+          <button class="btn btn-primary btn-block" type="submit" id="submitBtn">Sign in</button>
+        </form>
+        <p class="auth__foot">New here? <a href="/register">Create an account</a></p>
+        <div class="demo-note">
+          <strong>Demo accounts</strong> — password <code>codesit123</code><br />
+          Student: <code>chioma</code> &nbsp;·&nbsp; Lecturer: <code>mr_aluko</code>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="/js/auth.js"></script>
+</body>
+</html>

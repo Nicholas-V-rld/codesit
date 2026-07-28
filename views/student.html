@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Workspace · CodeSit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="wordmark wordmark--light">Code<span class="spark">.</span>Sit</div>
+    <div class="topbar__right">
+      <span class="topbar__user">Signed in as <b id="whoami">…</b></span>
+      <button class="btn btn-ink btn-sm" id="logoutBtn">Log out</button>
+    </div>
+  </header>
+
+  <div class="page">
+    <div class="work">
+      <section class="card">
+        <div class="editor-toolbar">
+          <select class="input" id="language"></select>
+          <input class="input title-input" id="title" placeholder="Question / title (optional)" />
+          <button class="btn btn-run" id="runBtn">▶ Run</button>
+          <button class="btn btn-primary" id="submitBtn">Submit</button>
+        </div>
+        <div class="editor-host"><div id="editor"></div></div>
+        <div class="statusbar state-ready" id="statusbar">
+          <span class="dot"></span>
+          <span id="statusText">ready</span>
+          <span class="grow"></span>
+          <span id="statusMeta"></span>
+        </div>
+        <div class="console" id="console"><span class="muted">Run your code to see the output here.</span></div>
+        <iframe class="iframe-host" id="preview" style="display:none" sandbox="allow-scripts"></iframe>
+      </section>
+
+      <aside class="sidebar">
+        <section class="card">
+          <div class="card__head"><span class="card__title">My profile</span></div>
+          <div class="card__body">
+            <div class="profile-grid">
+              <div class="field" style="margin:0">
+                <label for="p_name">Full name</label>
+                <input class="input" id="p_name" />
+              </div>
+              <div class="field" style="margin:0">
+                <label for="p_matric">Matric number</label>
+                <input class="input" id="p_matric" />
+              </div>
+              <div style="display:flex; gap:8px; flex-wrap:wrap">
+                <span class="readonly-pill"><span class="lbl">Dept</span> <span id="p_dept">—</span></span>
+                <span class="readonly-pill"><span class="lbl">Level</span> <span id="p_level">—</span></span>
+              </div>
+              <button class="btn btn-ghost btn-sm" id="saveProfile">Save profile</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card__head"><span class="card__title">My submissions</span></div>
+          <div class="card__body">
+            <div class="sub-list" id="subList"><div class="empty">Loading…</div></div>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
+  <script src="/js/student.js"></script>
+</body>
+</html>

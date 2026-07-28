@@ -1,0 +1,22 @@
+{
+  "name": "codesit",
+  "version": "1.0.0",
+  "description": "CodeSit — an online examination platform where students sit coding exams: write, run and submit code in the browser, with department- and level-based access control for lecturers.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "build:landing": "npm --prefix landing install && npm --prefix landing run build",
+    "build": "npm run build:landing"
+  },
+  "keywords": ["exam", "coding", "education", "ide", "assessment", "codesit"],
+  "author": "Oyinloluwa Daniel Majonagbe",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.7.2",
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^11.3.0",
+    "express": "^4.19.2",
+    "express-session": "^1.18.0"
+  }
+}

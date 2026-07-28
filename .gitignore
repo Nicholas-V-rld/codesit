@@ -1,0 +1,11 @@
+node_modules/
+landing/node_modules/
+landing/dist/
+database/*.db
+database/*.db-shm
+database/*.db-wal
+.env
+*.log
+.DS_Store
+.vscode/
+.idea/
