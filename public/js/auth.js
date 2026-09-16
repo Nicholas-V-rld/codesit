@@ -87,7 +87,13 @@ if (regForm) {
     }
     btn.disabled = true;
     const { ok, data } = await api('/api/register', 'POST', payload);
-    if (ok && data.ok) {
+    if (ok && data.ok && data.pending) {
+      // Lecturer accounts wait for an administrator before they can sign in.
+      regForm.reset();
+      document.querySelectorAll('#teachLevels .check').forEach((c) => c.classList.remove('on'));
+      showAlert('Account created. An administrator needs to approve lecturer accounts before you can sign in — you will be able to sign in once that is done.', 'ok');
+      btn.disabled = false;
+    } else if (ok && data.ok) {
       showAlert('Account created — taking you to sign in…', 'ok');
       setTimeout(() => (window.location.href = '/login'), 900);
     } else {

@@ -54,20 +54,28 @@ const T = DIALECT === "postgres"
       now: "DATETIME DEFAULT CURRENT_TIMESTAMP",
     };
 
-const SCHEMA = `
-  -- Every account (both students and lecturers) lives in one table,
-  -- distinguished by the "role" column.
-  CREATE TABLE IF NOT EXISTS users (
+// The users table's columns, kept separately because an older SQLite
+// database has to rebuild the table with them (see migrate()).
+const USERS_COLUMNS = `
     id            ${T.id},
     username      TEXT UNIQUE NOT NULL,
     password      TEXT NOT NULL,               -- stored hashed, never plain
-    role          TEXT NOT NULL CHECK (role IN ('student','lecturer')),
+    role          TEXT NOT NULL CHECK (role IN ('student','lecturer','admin')),
     full_name     TEXT NOT NULL DEFAULT '',
     matric_number TEXT DEFAULT '',             -- students
     staff_id      TEXT DEFAULT '',             -- lecturers
     department    TEXT NOT NULL DEFAULT '',
     level         TEXT DEFAULT '',             -- students only (ND1/ND2/HND1/HND2)
-    created_at    ${T.now}
+    -- 'active' can sign in; 'pending' is a lecturer awaiting an
+    -- administrator's approval; 'suspended' has been switched off.
+    status        TEXT NOT NULL DEFAULT 'active',
+    created_at    ${T.now}`;
+
+const SCHEMA = `
+  -- Every account (students, lecturers and administrators) lives in one
+  -- table, distinguished by the "role" column.
+  CREATE TABLE IF NOT EXISTS users (
+${USERS_COLUMNS}
   );
 
   -- A lecturer can teach several levels, so the teaching assignment is its
@@ -200,6 +208,25 @@ const SCHEMA = `
   CREATE INDEX IF NOT EXISTS idx_app_sessions_expires ON app_sessions(expires);
 `;
 
+// Bringing a PostgreSQL database made by an older version up to date. Each
+// change is made only if it is missing, so an up-to-date database is not
+// locked on every cold start.
+const PG_MIGRATIONS = `
+  DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                   WHERE table_schema = current_schema() AND table_name = 'users' AND column_name = 'status') THEN
+      ALTER TABLE users ADD COLUMN status TEXT NOT NULL DEFAULT 'active';
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint
+                   WHERE conrelid = 'users'::regclass AND conname = 'users_role_check'
+                     AND pg_get_constraintdef(oid) LIKE '%admin%') THEN
+      ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
+      ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('student','lecturer','admin'));
+    END IF;
+  END $$;
+`;
+
 // ===========================================================================
 // SQLite
 // ===========================================================================
@@ -258,6 +285,34 @@ function sqliteDriver() {
       add("staff_id", "TEXT DEFAULT ''");
       add("department", "TEXT NOT NULL DEFAULT ''");
       add("level", "TEXT DEFAULT ''");
+      add("status", "TEXT NOT NULL DEFAULT 'active'");
+
+      /*
+       * Databases made before administrators existed have a CHECK rule that
+       * only allows 'student' and 'lecturer'. SQLite cannot alter a CHECK, so
+       * the table is rebuilt with the new rule and the same rows — the
+       * procedure SQLite's documentation gives. Foreign keys are switched off
+       * meanwhile, or dropping the old table would cascade-delete every exam
+       * and answer that refers to a user.
+       */
+      const { sql } = conn.prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'users'").get();
+      if (!sql.includes("'admin'")) {
+        const keep = conn.prepare("PRAGMA table_info(users)").all().map((c) => c.name).join(", ");
+        conn.pragma("foreign_keys = OFF");
+        try {
+          conn.transaction(() => {
+            conn.exec(`CREATE TABLE users_new (${USERS_COLUMNS})`);
+            conn.exec(`INSERT INTO users_new (${keep}) SELECT ${keep} FROM users`);
+            conn.exec("DROP TABLE users");
+            conn.exec("ALTER TABLE users_new RENAME TO users");
+            conn.exec("CREATE INDEX IF NOT EXISTS idx_users_dept_level ON users(department, level)");
+            const broken = conn.prepare("PRAGMA foreign_key_check").all();
+            if (broken.length) throw new Error("users rebuild broke foreign keys");
+          })();
+        } finally {
+          conn.pragma("foreign_keys = ON");
+        }
+      }
     },
     close: async () => conn.close(),
   };
@@ -342,6 +397,7 @@ function postgresDriver() {
         await client.query("SELECT pg_advisory_xact_lock(724100)");
         if (PG_SCHEMA) await client.query(`CREATE SCHEMA IF NOT EXISTS "${PG_SCHEMA}"; SET LOCAL search_path TO "${PG_SCHEMA}"`);
         await client.query(sql);
+        await client.query(PG_MIGRATIONS);
         await client.query("COMMIT");
       } catch (err) {
         try { await client.query("ROLLBACK"); } catch (_) {}

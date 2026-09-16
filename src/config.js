@@ -24,8 +24,22 @@ module.exports = {
   PG_SCHEMA: process.env.PG_SCHEMA || "",
   DB_PATH: process.env.DB_PATH || path.join(__dirname, "..", "database", "codesit.db"),
 
-  // --- Roles ---
-  ROLES: { STUDENT: "student", LECTURER: "lecturer" },
+  // --- Roles and accounts ---
+  ROLES: { STUDENT: "student", LECTURER: "lecturer", ADMIN: "admin" },
+  STATUSES: { ACTIVE: "active", PENDING: "pending", SUSPENDED: "suspended" },
+  /*
+   * A lecturer can see every student in their department and levels, so by
+   * default a self-registered lecturer account waits for an administrator to
+   * approve it. Set LECTURER_APPROVAL=off to let lecturers in straight away.
+   */
+  LECTURER_APPROVAL: !/^(off|false|0|no)$/i.test(process.env.LECTURER_APPROVAL || ""),
+  /*
+   * The first administrator. When both are set and no account has that
+   * username yet, it is created as an administrator on startup. Changing the
+   * password later (on the admin page) is not undone by this.
+   */
+  ADMIN_USERNAME: (process.env.ADMIN_USERNAME || "").trim().toLowerCase(),
+  ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || "",
 
   /*
    * Academic structure.
@@ -66,7 +80,7 @@ module.exports = {
    * Code execution engine.
    * ----------------------
    * Student code never runs inside the CodeSit process itself; it always goes
-   * to a separate runner. There are three, and the trade-off between them is
+   * to a separate runner. There are four, and the trade-off between them is
    * worth knowing:
    *
    *   local (default) — runs on this machine as a separate, short-lived

@@ -37,7 +37,7 @@ CodeSit fixes all of this:
 
 ---
 
-## 3. The two kinds of users
+## 3. The three kinds of users
 
 **Students** — see the exams set for their own department and level on their
 dashboard. Opening one starts a server-timed countdown; they write an answer per
@@ -53,7 +53,15 @@ scheme of test cases (an input, the expected output, marks, and whether it's
 hidden from students). Publishing an exam makes it visible to every student in
 the lecturer's department at that level. The results screen shows every score,
 lets the lecturer open any paper to see the code and the per-test breakdown, and
-export the whole class's results as a CSV.
+export the whole class's results as a CSV. A lecturer who registers themselves
+cannot sign in until an administrator approves the account — otherwise anyone
+could claim to teach any department and read its students' work.
+
+**Administrators** — sign in to `/admin`. They approve (or reject) new
+lecturers, create, edit, suspend or delete accounts, reset passwords, see
+system-wide numbers per department, and can take any exam offline. An account
+with exam records cannot be deleted, only suspended, so no results are ever
+lost by accident; and an administrator cannot suspend or delete themselves.
 
 ---
 

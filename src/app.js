@@ -22,12 +22,13 @@ const config = require("./config");
 const db = require("./db");
 const seed = require("./seed");
 const DbSessionStore = require("./session-store");
-const { requireAuth } = require("./middleware/auth");
+const { requireAuth, homeFor } = require("./middleware/auth");
 
 const authRoutes = require("./routes/auth.routes");
 const executeRoutes = require("./routes/execute.routes");
 const submissionRoutes = require("./routes/submission.routes");
 const examRoutes = require("./routes/exam.routes");
+const adminRoutes = require("./routes/admin.routes");
 
 const ROOT = path.join(__dirname, "..");
 
@@ -40,7 +41,7 @@ const ROOT = path.join(__dirname, "..");
 let initPromise = null;
 function init() {
   if (!initPromise) {
-    initPromise = db.ready().then(seed).catch((err) => {
+    initPromise = db.ready().then(seed).then(seed.ensureAdmin).catch((err) => {
       initPromise = null;
       throw err;
     });
@@ -176,6 +177,7 @@ function createApp() {
   app.use("/api", executeRoutes);
   app.use("/api", submissionRoutes);
   app.use("/api", examRoutes);
+  app.use("/api", adminRoutes);
 
   // --- Pages ---
   const page = (file) => path.join(ROOT, "views", file);
@@ -183,9 +185,7 @@ function createApp() {
   app.get("/", (req, res) => {
     // Logged-in users skip the marketing page.
     if (req.session.userId) {
-      return res.redirect(
-        req.session.role === config.ROLES.LECTURER ? "/lecturer" : "/student"
-      );
+      return res.redirect(homeFor(req.session.role));
     }
     if (fs.existsSync(LANDING_INDEX)) {
       return res.sendFile(LANDING_INDEX);
@@ -199,14 +199,14 @@ function createApp() {
   app.get("/login", (req, res) => res.sendFile(page("login.html")));
   app.get("/register", (req, res) => res.sendFile(page("register.html")));
 
-  const studentPage = (file) => [requireAuth, (req, res) => {
-    if (req.session.role !== config.ROLES.STUDENT) return res.redirect("/lecturer");
+  // A page for one role; anyone else is sent to their own home page.
+  const rolePage = (role) => (file) => [requireAuth, (req, res) => {
+    if (req.session.role !== role) return res.redirect(homeFor(req.session.role));
     res.sendFile(page(file));
   }];
-  const lecturerPage = (file) => [requireAuth, (req, res) => {
-    if (req.session.role !== config.ROLES.LECTURER) return res.redirect("/student");
-    res.sendFile(page(file));
-  }];
+  const studentPage = rolePage(config.ROLES.STUDENT);
+  const lecturerPage = rolePage(config.ROLES.LECTURER);
+  const adminPage = rolePage(config.ROLES.ADMIN);
 
   app.get("/student", ...studentPage("student.html"));
   app.get("/exam", ...studentPage("exam.html"));        // sitting a paper
@@ -215,6 +215,8 @@ function createApp() {
   app.get("/lecturer", ...lecturerPage("lecturer.html"));
   app.get("/exam-builder", ...lecturerPage("exam-builder.html")); // setting a paper
   app.get("/exam-results", ...lecturerPage("exam-results.html")); // marking & records
+
+  app.get("/admin", ...adminPage("admin.html"));        // accounts, approvals, oversight
 
   /*
    * Anything that went wrong without a response being sent — most likely the

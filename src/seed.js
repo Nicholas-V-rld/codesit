@@ -16,10 +16,17 @@
  *   Engr Musa   (Comp Eng, ND1 & ND2)    -> sees Adeola only
  *
  * Password for every demo account: codesit123
+ *
+ * A demo administrator (`admin`) is added too, but only for local
+ * development: on a public deployment an administrator with a published
+ * password would hand the whole system to anyone. There, the first
+ * administrator comes from ADMIN_USERNAME / ADMIN_PASSWORD (ensureAdmin
+ * below) or from `npm run create-admin`.
  */
 
 const bcrypt = require("bcryptjs");
 const db = require("./db");
+const { IS_PRODUCTION, ADMIN_USERNAME, ADMIN_PASSWORD } = require("./config");
 
 async function seed() {
   const { n } = await db.get("SELECT COUNT(*) AS n FROM users");
@@ -51,6 +58,9 @@ async function seed() {
     for (const s of students) {
       await tx.run(insertUser, [s.username, PW, "student", s.full_name, s.matric, "", s.dept, s.level]);
     }
+    if (!IS_PRODUCTION) {
+      await tx.run(insertUser, ["admin", PW, "admin", "Demo Administrator", "", "", "", ""]);
+    }
     for (const l of lecturers) {
       await tx.run(insertUser, [l.username, PW, "lecturer", l.full_name, "", l.staff, l.dept, ""]);
       const { id } = await tx.get("SELECT id FROM users WHERE username = ?", [l.username]);
@@ -63,4 +73,22 @@ async function seed() {
   console.log("✓ Seeded demo accounts (password for all: codesit123)");
 }
 
+/*
+ * Create the administrator named in ADMIN_USERNAME / ADMIN_PASSWORD if no
+ * account has that username yet. Runs on every start, but never touches an
+ * existing account — so a password changed on the admin page stays changed.
+ */
+async function ensureAdmin() {
+  if (!ADMIN_USERNAME || !ADMIN_PASSWORD) return;
+  const exists = await db.get("SELECT id FROM users WHERE username = ?", [ADMIN_USERNAME]);
+  if (exists) return;
+  await db.run(`
+    INSERT INTO users (username, password, role, full_name, status)
+    VALUES (?, ?, 'admin', 'Administrator', 'active')
+    ON CONFLICT (username) DO NOTHING
+  `, [ADMIN_USERNAME, await bcrypt.hash(ADMIN_PASSWORD, 10)]);
+  console.log(`✓ Created administrator "${ADMIN_USERNAME}"`);
+}
+
 module.exports = seed;
+module.exports.ensureAdmin = ensureAdmin;

@@ -70,9 +70,40 @@ Password for all: **`codesit123`**
 | Lecturer | `mr_aluko`   | CS — teaches ND1 & ND2 → sees Chioma, Tunde |
 | Lecturer | `mrs_okoro`  | CS — teaches HND1 & HND2 → sees Amaka, Khalid |
 | Lecturer | `engr_musa`  | Comp Eng — ND1 & ND2 → sees only Adeola |
+| Admin    | `admin`      | Everything — **local development only** |
 
 Log in as `mr_aluko`, then as `mrs_okoro`: same department, different levels,
 different students. That's the access control at work.
+
+## Administration
+
+Administrators are the third role. Signing in as one opens **`/admin`**:
+
+- **Overview** — students, lecturers, exams, papers handed in, who is sitting
+  an exam right now, and the same numbers per department.
+- **Lecturer approval** — a lecturer sees every student in the department and
+  levels they choose at registration, so a self-registered lecturer account
+  waits as *pending* until an administrator approves it (or rejects it).
+  Students are let in straight away. Set `LECTURER_APPROVAL=off` to skip this.
+- **Accounts** — search and filter every account; create students, lecturers
+  or other administrators; edit names, departments and levels; set a new
+  password; suspend an account (it is signed out at once, even mid-exam);
+  delete an account that has no exams or marked papers.
+- **Exams** — every exam from every lecturer, with hand-in counts and
+  averages, and the ability to take one offline.
+
+Everyone can change their own password (`PUT /api/password`).
+
+The demo `admin` account exists only in local development. For a real
+deployment, create the first administrator with either
+
+```bash
+npm run create-admin -- <username>        # prints a generated password
+```
+
+(run after `vercel env pull .env.local` to target the deployed database), or
+by setting `ADMIN_USERNAME` and `ADMIN_PASSWORD`, which creates that account on
+startup if it does not exist yet.
 
 ## Setting and sitting an exam
 
@@ -143,11 +174,11 @@ The app deploys to Vercel as a single Express function (`src/app.js`), with
    (`vercel env add SESSION_SECRET production`).
 3. `npm run sandbox:setup` once, so the first student is not the one waiting
    for the compilers to install.
-4. `vercel deploy`, check the preview, then `vercel deploy --prod`.
+4. `npm run create-admin -- <username>` to create the first administrator.
+5. `vercel deploy`, check the preview, then `vercel deploy --prod`.
 
 Before real students use a public deployment, delete or re-password the demo
-accounts — their password is published above — and remember that anyone can
-register as a lecturer for any department.
+accounts from the admin page — their password is published above.
 
 ## Configuration
 
@@ -161,6 +192,8 @@ Environment variables (all optional — sensible defaults built in). Copy
 | `NODE_ENV`      | *(unset)*                        | Set to `production` to mark session cookies HTTPS-only |
 | `DATABASE_URL`  | *(unset → SQLite)*               | PostgreSQL connection string; required on Vercel |
 | `DB_PATH`       | `database/codesit.db`            | SQLite file, when `DATABASE_URL` is unset |
+| `LECTURER_APPROVAL` | `on`                         | `off` lets new lecturers sign in without approval |
+| `ADMIN_USERNAME`, `ADMIN_PASSWORD` | *(unset)*       | Create this administrator on startup if missing |
 | `EXECUTOR`      | `local` (`sandbox` on Vercel)    | `local`, `sandbox`, `piston` or `wandbox` |
 | `SANDBOX_NAME`  | `codesit-runner`                 | Name of the Vercel Sandbox machine |
 | `PISTON_URL`    | `https://emkc.org/api/v2/piston` | Piston endpoint (self-host this) |
@@ -180,6 +213,7 @@ codesit/
 ├─ server.js                  loads config and starts listening (locally)
 ├─ vercel.json, .vercelignore  Vercel build settings
 ├─ scripts/setup-sandbox.js   prepares and checks the Vercel Sandbox runner
+├─ scripts/create-admin.js    creates (or promotes) an administrator
 ├─ landing/                   Vite + React marketing site (built → landing/dist)
 ├─ src/
 │  ├─ app.js                  builds the Express app (routes, middleware, pages)
@@ -198,8 +232,9 @@ codesit/
 │     ├─ auth.routes.js        register, login, logout, profile
 │     ├─ submission.routes.js  freeform submit + THE ACCESS-CONTROL QUERIES
 │     ├─ execute.routes.js     the "Run this code" endpoint
-│     └─ exam.routes.js        setting, sitting, and marking exams
-├─ views/                      login, register, student & lecturer dashboards,
+│     ├─ exam.routes.js        setting, sitting, and marking exams
+│     └─ admin.routes.js       approvals, accounts, system-wide oversight
+├─ views/                      login, register, student, lecturer & admin dashboards,
 │                              exam builder, sitting an exam, results, a marked paper
 ├─ public/                     css + browser js
 ├─ test/                       node:test suite proving the access-control claims

@@ -6,6 +6,7 @@
  *  POST /api/logout     sign out
  *  GET  /api/me         who am I (used by dashboards on load)
  *  PUT  /api/profile    student updates editable profile fields
+ *  PUT  /api/password   anyone signed in changes their own password
  *  GET  /api/meta       departments / levels / languages for the forms
  */
 
@@ -13,7 +14,7 @@ const bcrypt = require("bcryptjs");
 const db = require("../db");
 const { asyncRouter } = require("../lib/router");
 const { requireAuth } = require("../middleware/auth");
-const { DEPARTMENTS, LEVELS, LANGUAGES, ROLES } = require("../config");
+const { DEPARTMENTS, LEVELS, LANGUAGES, ROLES, STATUSES, LECTURER_APPROVAL } = require("../config");
 
 const router = asyncRouter();
 
@@ -63,12 +64,14 @@ router.post("/register", async (req, res) => {
 
   // Async, so hashing does not hold up every other request while it works.
   const passwordHash = await bcrypt.hash(password, 10);
+  // Lecturers see students' work, so they wait for an administrator's approval.
+  const status = role === ROLES.LECTURER && LECTURER_APPROVAL ? STATUSES.PENDING : STATUSES.ACTIVE;
 
   try {
     await db.transaction(async (tx) => {
       const userId = await tx.insert(`
-        INSERT INTO users (username, password, role, full_name, matric_number, staff_id, department, level)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO users (username, password, role, full_name, matric_number, staff_id, department, level, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [
         username,
         passwordHash,
@@ -78,6 +81,7 @@ router.post("/register", async (req, res) => {
         role === ROLES.LECTURER ? (b.staff_id || "").trim() : "",
         b.department,
         role === ROLES.STUDENT ? b.level : "",
+        status,
       ]);
       if (role === ROLES.LECTURER) {
         for (const lvl of b._levels) {
@@ -88,7 +92,7 @@ router.post("/register", async (req, res) => {
         }
       }
     });
-    res.json({ ok: true });
+    res.json({ ok: true, pending: status === STATUSES.PENDING });
   } catch (e) {
     // Two people claiming the same username at the same instant: the check
     // above passed for both, and the UNIQUE rule stopped the second.
@@ -104,6 +108,10 @@ router.post("/login", async (req, res) => {
   const user = await db.get("SELECT * FROM users WHERE username = ?", [username]);
   if (!user || !(await bcrypt.compare(password, user.password)))
     return res.status(401).json({ error: "Wrong username or password." });
+  if (user.status === STATUSES.PENDING)
+    return res.status(403).json({ error: "Your lecturer account is waiting for an administrator to approve it." });
+  if (user.status !== STATUSES.ACTIVE)
+    return res.status(403).json({ error: "This account has been suspended. Please contact an administrator." });
 
   req.session.userId = user.id;
   req.session.role = user.role;
@@ -118,7 +126,7 @@ router.post("/logout", (req, res) => {
 // ---- Current user ----
 router.get("/me", requireAuth, async (req, res) => {
   const user = await db.get(`
-    SELECT id, username, role, full_name, matric_number, staff_id, department, level
+    SELECT id, username, role, full_name, matric_number, staff_id, department, level, status
     FROM users WHERE id = ?
   `, [req.session.userId]);
   if (!user) return res.status(404).json({ error: "Account not found." });
@@ -144,6 +152,21 @@ router.put("/profile", requireAuth, async (req, res) => {
   } else {
     await db.run("UPDATE users SET full_name = ? WHERE id = ?", [full_name, req.session.userId]);
   }
+  res.json({ ok: true });
+});
+
+// ---- Change my own password ----
+router.put("/password", requireAuth, async (req, res) => {
+  const current = String(req.body.current_password || "");
+  const next = String(req.body.new_password || "");
+  if (next.length < 8)
+    return res.status(400).json({ error: "The new password must be at least 8 characters." });
+
+  const user = await db.get("SELECT password FROM users WHERE id = ?", [req.session.userId]);
+  if (!user || !(await bcrypt.compare(current, user.password)))
+    return res.status(400).json({ error: "Your current password is not right." });
+
+  await db.run("UPDATE users SET password = ? WHERE id = ?", [await bcrypt.hash(next, 10), req.session.userId]);
   res.json({ ok: true });
 });
 

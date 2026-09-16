@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Administration · CodeSit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="wordmark wordmark--light">Code<span class="spark">.</span>Sit <span class="topbar__badge">Admin</span></div>
+    <div class="topbar__right">
+      <span class="topbar__user">Signed in as <b id="whoami">…</b></span>
+      <button class="btn btn-ink btn-sm" id="passwordBtn">Change password</button>
+      <button class="btn btn-ink btn-sm" id="logoutBtn">Log out</button>
+    </div>
+  </header>
+
+  <div class="page">
+    <nav class="navstrip" id="tabs">
+      <a href="#overview" data-tab="overview" class="on">Overview</a>
+      <a href="#accounts" data-tab="accounts">Accounts <span class="count" id="pendingCount" hidden></span></a>
+      <a href="#exams" data-tab="exams">Exams</a>
+    </nav>
+
+    <!-- ============================ OVERVIEW ============================ -->
+    <section data-panel="overview">
+      <section class="scope-card">
+        <div class="metric"><div class="n" id="mStudents">—</div><div class="l">Students</div></div>
+        <div class="divider"></div>
+        <div class="metric"><div class="n" id="mLecturers">—</div><div class="l">Lecturers</div></div>
+        <div class="divider"></div>
+        <div class="metric"><div class="n" id="mExams">—</div><div class="l">Exams · <span id="mLive">0</span> live</div></div>
+        <div class="divider"></div>
+        <div class="metric"><div class="n" id="mPapers">—</div><div class="l">Papers handed in</div></div>
+        <div class="divider"></div>
+        <div class="metric"><div class="n" id="mSitting">—</div><div class="l">Sitting now</div></div>
+      </section>
+
+      <section class="card approvals" id="approvalsCard" style="margin-bottom:22px">
+        <div class="card__head">
+          <span class="card__title">Lecturers awaiting approval</span>
+          <span class="hint" style="margin:0">A lecturer sees every student in the department and levels they claim — check before approving.</span>
+        </div>
+        <div class="card__body" id="approvals"><div class="empty">Loading…</div></div>
+      </section>
+
+      <section class="card">
+        <div class="card__head"><span class="card__title">By department</span></div>
+        <div class="card__body table-wrap">
+          <table>
+            <thead><tr><th>Department</th><th>Students</th><th>Lecturers</th><th>Exams</th></tr></thead>
+            <tbody id="deptBody"><tr><td colspan="4"><div class="empty">Loading…</div></td></tr></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+
+    <!-- ============================ ACCOUNTS ============================ -->
+    <section data-panel="accounts" hidden>
+      <section class="card">
+        <div class="card__head">
+          <span class="card__title">Accounts</span>
+          <button class="btn btn-primary btn-sm" id="newUserBtn">+ New account</button>
+        </div>
+        <div class="card__body">
+          <div class="toolbar">
+            <input class="input" id="search" type="search" placeholder="Search name, username, matric or staff ID" />
+            <div class="filters" id="roleFilters">
+              <button class="pill on" data-role="">All</button>
+              <button class="pill" data-role="student">Students</button>
+              <button class="pill" data-role="lecturer">Lecturers</button>
+              <button class="pill" data-role="admin">Admins</button>
+            </div>
+            <div class="filters" id="statusFilters">
+              <button class="pill on" data-status="">Any status</button>
+              <button class="pill" data-status="pending">Pending</button>
+              <button class="pill" data-status="suspended">Suspended</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Account</th><th>Role</th><th>Department</th><th>Level(s)</th><th>Status</th><th></th></tr></thead>
+              <tbody id="userBody"><tr><td colspan="6"><div class="empty">Loading…</div></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <!-- ============================== EXAMS ============================= -->
+    <section data-panel="exams" hidden>
+      <section class="card">
+        <div class="card__head">
+          <span class="card__title">Every exam</span>
+          <button class="btn btn-ghost btn-sm" id="refreshExams">↻ Refresh</button>
+        </div>
+        <div class="card__body table-wrap">
+          <table>
+            <thead><tr><th>Exam</th><th>Set by</th><th>Scope</th><th>Handed in</th><th>Average</th><th>Status</th><th></th></tr></thead>
+            <tbody id="examBody"><tr><td colspan="7"><div class="empty">Loading…</div></td></tr></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+  </div>
+
+  <!-- Account editor: create or edit -->
+  <div class="modal" id="userModal">
+    <div class="modal__box modal__box--narrow">
+      <div class="modal__head">
+        <h3 id="userModalTitle">Account</h3>
+        <button class="x" data-close>✕</button>
+      </div>
+      <div class="modal__body">
+        <div id="userAlert" class="alert alert-error"></div>
+        <form id="userForm" novalidate>
+          <div class="field" id="roleField">
+            <label>Role</label>
+            <div class="roletabs" id="roleTabs">
+              <button type="button" class="roletab on" data-role="student">Student</button>
+              <button type="button" class="roletab" data-role="lecturer">Lecturer</button>
+              <button type="button" class="roletab" data-role="admin">Admin</button>
+            </div>
+          </div>
+          <div class="field">
+            <label for="fFullName">Full name</label>
+            <input class="input" id="fFullName" />
+          </div>
+          <div class="row-2 create-only">
+            <div class="field">
+              <label for="fUsername">Username</label>
+              <input class="input" id="fUsername" autocomplete="off" />
+            </div>
+            <div class="field">
+              <label for="fPassword">Password</label>
+              <input class="input" id="fPassword" type="text" autocomplete="new-password" />
+              <div class="hint">At least 8 characters. Share it privately.</div>
+            </div>
+          </div>
+          <div class="field not-admin">
+            <label for="fDept">Department</label>
+            <select class="input" id="fDept"></select>
+          </div>
+          <div class="row-2 student-only">
+            <div class="field">
+              <label for="fLevel">Level</label>
+              <select class="input" id="fLevel"></select>
+            </div>
+            <div class="field">
+              <label for="fMatric">Matric number</label>
+              <input class="input" id="fMatric" />
+            </div>
+          </div>
+          <div class="lecturer-only">
+            <div class="field">
+              <label for="fStaff">Staff ID</label>
+              <input class="input" id="fStaff" />
+            </div>
+            <div class="field">
+              <label>Levels taught</label>
+              <div class="checks" id="fLevels"></div>
+            </div>
+          </div>
+          <button class="btn btn-primary btn-block" type="submit" id="userSave">Save</button>
+        </form>
+
+        <div class="danger-zone edit-only">
+          <h4>Account actions</h4>
+          <div class="danger-row">
+            <div>
+              <div class="t">Set a new password</div>
+              <div class="hint">Signs the account out everywhere.</div>
+            </div>
+            <div class="inline-form">
+              <input class="input" id="resetPassword" type="text" placeholder="New password" autocomplete="new-password" />
+              <button class="btn btn-ghost btn-sm" id="resetBtn" type="button">Set</button>
+            </div>
+          </div>
+          <div class="danger-row">
+            <div>
+              <div class="t" id="statusActionTitle">Suspend</div>
+              <div class="hint" id="statusActionHint">They can no longer sign in, and are signed out at once.</div>
+            </div>
+            <button class="btn btn-ghost btn-sm" id="statusBtn" type="button">Suspend</button>
+          </div>
+          <div class="danger-row">
+            <div>
+              <div class="t">Delete account</div>
+              <div class="hint" id="deleteHint">Only possible for accounts with no exams or marked papers.</div>
+            </div>
+            <button class="btn btn-danger btn-sm" id="deleteBtn" type="button">Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Change my password -->
+  <div class="modal" id="pwModal">
+    <div class="modal__box modal__box--narrow">
+      <div class="modal__head">
+        <h3>Change your password</h3>
+        <button class="x" data-close>✕</button>
+      </div>
+      <div class="modal__body">
+        <div id="pwAlert" class="alert alert-error"></div>
+        <form id="pwForm" novalidate>
+          <div class="field">
+            <label for="pwCurrent">Current password</label>
+            <input class="input" id="pwCurrent" type="password" autocomplete="current-password" />
+          </div>
+          <div class="field">
+            <label for="pwNew">New password</label>
+            <input class="input" id="pwNew" type="password" autocomplete="new-password" />
+            <div class="hint">At least 8 characters.</div>
+          </div>
+          <button class="btn btn-primary btn-block" type="submit">Change password</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="/js/admin.js"></script>
+</body>
+</html>

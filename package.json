@@ -10,7 +10,8 @@
     "build:landing": "npm --prefix landing install && npm --prefix landing run build",
     "build": "npm run build:landing",
     "vercel-build": "npm run build:landing",
-    "sandbox:setup": "node scripts/setup-sandbox.js"
+    "sandbox:setup": "node scripts/setup-sandbox.js",
+    "create-admin": "node scripts/create-admin.js"
   },
   "keywords": [
     "exam",
