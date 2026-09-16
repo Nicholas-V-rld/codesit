@@ -44,8 +44,10 @@ const SETUP_VERSION = "2";
 
 let runnerPromise = null;
 
+// Loaded as an ES module: the SDK's CommonJS build require()s an ESM-only
+// dependency, which Vercel's function runtime refuses.
 function sandboxSdk() {
-  return require("@vercel/sandbox");
+  return import("@vercel/sandbox");
 }
 
 async function sh(sandbox, script, { sudo = false, timeoutMs = 10 * 60 * 1000 } = {}) {
@@ -99,7 +101,7 @@ async function provision(sandbox, log = () => {}) {
 function getRunner({ log } = {}) {
   if (!runnerPromise) {
     runnerPromise = (async () => {
-      const { Sandbox } = sandboxSdk();
+      const { Sandbox } = await sandboxSdk();
       const sandbox = await Sandbox.getOrCreate({
         name: SANDBOX_NAME,
         persistent: true,

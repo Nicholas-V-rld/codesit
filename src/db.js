@@ -275,7 +275,9 @@ function postgresDriver() {
   pg.types.setTypeParser(1700, (v) => Number(v)); // numeric
 
   const pool = new pg.Pool({
-    connectionString: DATABASE_URL,
+    // sslmode=require already means full certificate verification in pg 8;
+    // saying so explicitly keeps that behaviour when pg 9 changes the meaning.
+    connectionString: DATABASE_URL.replace(/([?&]sslmode=)(prefer|require|verify-ca)\b/, "$1verify-full"),
     max: Number(process.env.PG_POOL_MAX) || 5,
     idleTimeoutMillis: 5000,
   });
