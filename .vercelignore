@@ -10,3 +10,6 @@ landing/node_modules
 landing/dist
 *.log
 .DS_Store
+.agents
+skills-lock.json
+scripts/verify-*.js

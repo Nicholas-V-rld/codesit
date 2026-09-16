@@ -16,3 +16,7 @@ database/*.db-wal
 
 # Local Claude Code settings and worktrees
 .claude/
+
+# Agent skills installed by the Vercel CLI
+.agents/
+skills-lock.json
