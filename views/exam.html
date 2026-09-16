@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sitting · CodeSit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="wordmark wordmark--light">Code<span class="spark">.</span>Sit</div>
+    <div class="topbar__right">
+      <span class="topbar__user">Sitting as <b id="whoami">…</b></span>
+    </div>
+  </header>
+
+  <!-- The clock. Counts down to a deadline the server calculated. -->
+  <div class="exam-bar">
+    <div>
+      <div class="ttl" id="examTitle">Loading…</div>
+      <div class="sub" id="examSub">—</div>
+    </div>
+    <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap">
+      <span class="autosave" id="autosave">—</span>
+      <div class="clock" id="clock">--:--</div>
+      <button class="btn btn-primary" id="handInBtn">Hand in paper</button>
+    </div>
+  </div>
+
+  <div class="page">
+    <div class="notice" id="notice" style="display:none"></div>
+
+    <div class="sit">
+      <!-- Question panel -->
+      <aside class="card">
+        <div class="card__body">
+          <div class="qnav" id="qnav"></div>
+          <div class="qhead">
+            <span class="n" id="qTitle">Question</span>
+            <span class="marks" id="qMarks">—</span>
+          </div>
+          <div class="prompt" id="qPrompt">Loading…</div>
+          <div class="samples" id="samples"></div>
+        </div>
+      </aside>
+
+      <!-- Answer panel -->
+      <section class="card">
+        <div class="editor-toolbar">
+          <span class="tag" id="qLang">—</span>
+          <span class="grow" style="flex:1"></span>
+          <button class="btn btn-ghost btn-sm" id="resetBtn">Reset to starter</button>
+          <button class="btn btn-run" id="runBtn">▶ Run against samples</button>
+        </div>
+        <div class="editor-host"><div id="editor"></div></div>
+        <div class="statusbar state-ready" id="statusbar">
+          <span class="dot"></span>
+          <span id="statusText">ready</span>
+          <span class="grow"></span>
+          <span id="statusMeta"></span>
+        </div>
+        <div class="console" id="console"><span class="muted">Run your code to check it against the sample cases. This is practice — it does not affect your mark.</span></div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Hand-in confirmation -->
+  <div class="modal" id="confirmModal">
+    <div class="modal__box" style="max-width:520px">
+      <div class="modal__head">
+        <h3>Hand in your paper?</h3>
+        <button class="x" id="closeConfirm">✕</button>
+      </div>
+      <div class="modal__body">
+        <p style="margin-bottom:14px">Your answers will be marked straight away — the server runs each one against every test case, including the hidden ones.</p>
+        <div class="notice" id="unansweredWarn" style="display:none"></div>
+        <p style="color:var(--muted); font-size:13.5px; margin-bottom:18px">This cannot be undone. You will not be able to edit your answers afterwards.</p>
+        <div style="display:flex; gap:10px">
+          <button class="btn btn-primary" id="confirmHandIn">Yes, hand in</button>
+          <button class="btn btn-ghost" id="cancelHandIn">Keep working</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
+  <script src="/js/exam.js"></script>
+</body>
+</html>

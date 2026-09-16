@@ -59,7 +59,54 @@ require(['vs/editor/editor.main'], async function () {
 
   loadMe();
   loadSubmissions();
+  loadExams();
 });
+
+// ---- Exams set for my department + level ----
+async function loadExams() {
+  const { data } = await api('/api/student/exams', 'GET');
+  const list = $('examList');
+  if (!Array.isArray(data) || !data.length) {
+    list.innerHTML = '<div class="empty">No exams have been set for you yet.</div>';
+    return;
+  }
+  list.innerHTML = data.map((e) => {
+    const isDone = e.status === 'submitted';
+    const isLive = e.status === 'in_progress';
+    const cls = isDone ? 'done' : isLive ? 'live' : '';
+    const action = isDone
+      ? `<a class="btn btn-ghost btn-sm" href="/result?attempt=${e.attempt_id}">View result</a>`
+      : isLive
+        ? `<a class="btn btn-primary btn-sm" href="#" data-start="${e.id}">Resume — time is running</a>`
+        : `<a class="btn btn-run btn-sm" href="#" data-start="${e.id}">Start</a>`;
+    const meta = isDone
+      ? `${e.total_score} / ${e.max_score} marks · handed in ${new Date(e.submitted_at).toLocaleString()}`
+      : `${e.question_count} question${e.question_count === 1 ? '' : 's'} · ${e.total_marks} marks · ${e.duration_mins} min · by ${escapeHtml(e.lecturer_name)}`;
+    return `
+      <div class="exam-card ${cls}">
+        <div class="grow">
+          <div class="ttl">${escapeHtml(e.title)}</div>
+          <div class="meta">${meta}</div>
+        </div>
+        ${action}
+      </div>`;
+  }).join('');
+
+  list.querySelectorAll('[data-start]').forEach((el) => {
+    el.addEventListener('click', async (ev) => {
+      ev.preventDefault();
+      const examId = el.dataset.start;
+      const { ok, data } = await api(`/api/student/exams/${examId}/start`, 'POST');
+      if (ok && data.ok) {
+        window.location.href = `/exam?attempt=${data.attempt_id}`;
+      } else if (data.attempt_id) {
+        window.location.href = `/result?attempt=${data.attempt_id}`;
+      } else {
+        toast(data.error || 'Could not start this exam');
+      }
+    });
+  });
+}
 
 async function loadMe() {
   const { data } = await api('/api/me', 'GET');

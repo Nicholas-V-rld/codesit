@@ -12,8 +12,16 @@ module.exports = {
   // --- Server ---
   PORT: process.env.PORT || 3000,
   SESSION_SECRET: process.env.SESSION_SECRET || "codesit-dev-secret-change-me",
+  // Vercel serves every deployment (previews included) over HTTPS behind its
+  // proxy, so it counts as production for cookies even without NODE_ENV.
+  IS_PRODUCTION: process.env.NODE_ENV === "production" || Boolean(process.env.VERCEL),
+  ON_VERCEL: Boolean(process.env.VERCEL),
 
   // --- Database ---
+  // With DATABASE_URL set (a hosted deployment), PostgreSQL is used; without
+  // it, a local SQLite file at DB_PATH. See src/db.js.
+  DATABASE_URL: process.env.DATABASE_URL || process.env.POSTGRES_URL || "",
+  PG_SCHEMA: process.env.PG_SCHEMA || "",
   DB_PATH: process.env.DB_PATH || path.join(__dirname, "..", "database", "codesit.db"),
 
   // --- Roles ---
@@ -57,20 +65,43 @@ module.exports = {
   /*
    * Code execution engine.
    * ----------------------
-   * IMPORTANT: the free public Piston API (emkc.org) stopped being open to the
-   * public on 15 Feb 2026 and now needs an authorisation token. So CodeSit
-   * defaults to WANDBOX, a long-running free service that needs no key and
-   * works out of the box.
+   * Student code never runs inside the CodeSit process itself; it always goes
+   * to a separate runner. There are three, and the trade-off between them is
+   * worth knowing:
    *
-   * To use Piston instead (recommended for production — ideally self-hosted),
-   * launch with:  EXECUTOR=piston PISTON_URL=http://localhost:2000/api/v2/piston
-   * and, if using the public endpoint, PISTON_TOKEN=your-token
+   *   local (default) — runs on this machine as a separate, short-lived
+   *     process in a temp directory, killed on a timeout and with its output
+   *     capped. Nothing to install, no account, no internet, so "Run" and
+   *     automatic marking work immediately. It is NOT a security sandbox: use
+   *     it for development and for a lecturer's own lab machine.
+   *
+   *   piston — a real sandbox for a self-hosted deployment. The public
+   *     endpoint (emkc.org) stopped being freely available on 15 Feb 2026,
+   *     so self-host it:
+   *       docker run -d -p 2000:2000 ghcr.io/engineer-man/piston
+   *       EXECUTOR=piston PISTON_URL=http://localhost:2000/api/v2/piston npm start
+   *
+   *   wandbox — a free public sandbox needing no key. Convenient, but it is a
+   *     shared community service and has outages.
+   *
+   *   sandbox — Vercel Sandbox: a Firecracker microVM with no network access,
+   *     separate from the web server, its database and its secrets. The
+   *     default when deployed on Vercel. See src/services/vercel-sandbox.js.
    */
-  EXECUTOR: process.env.EXECUTOR || "wandbox", // "wandbox" | "piston"
+  /*
+   * Which engine runs student code. "local" is the default so that a fresh
+   * clone works with nothing to install and no internet: see the note above.
+   * For a deployment where students' code cannot be trusted, run a sandbox
+   * (self-hosted Piston) and set EXECUTOR=piston.
+   */
+  EXECUTOR: process.env.EXECUTOR || (process.env.VERCEL ? "sandbox" : "local"), // "local" | "sandbox" | "piston" | "wandbox"
+  SANDBOX_NAME: process.env.SANDBOX_NAME || "codesit-runner",
   PISTON_URL: process.env.PISTON_URL || "https://emkc.org/api/v2/piston",
   PISTON_TOKEN: process.env.PISTON_TOKEN || "",
   WANDBOX_URL: process.env.WANDBOX_URL || "https://wandbox.org/api",
 
   // Safety limits for execution
-  RUN_TIMEOUT_MS: 8000,
+  RUN_TIMEOUT_MS: Number(process.env.RUN_TIMEOUT_MS) || 8000,
+  // How much of a program's output we keep before truncating (per stream).
+  OUTPUT_CAP_BYTES: Number(process.env.OUTPUT_CAP_BYTES) || 64 * 1024,
 };

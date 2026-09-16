@@ -19,6 +19,11 @@
   </header>
 
   <div class="page">
+    <nav class="navstrip">
+      <a href="/lecturer" class="on">Dashboard</a>
+      <a href="/exam-builder">Set an exam</a>
+    </nav>
+
     <section class="scope-card">
       <div class="metric"><div class="n" id="mDept">—</div><div class="l">Department</div></div>
       <div class="divider"></div>
@@ -34,9 +39,19 @@
 
     <div class="stat-grid" id="statGrid"></div>
 
+    <section class="card" style="margin-bottom:22px">
+      <div class="card__head">
+        <span class="card__title">My exams</span>
+        <a class="btn btn-primary btn-sm" href="/exam-builder">+ New exam</a>
+      </div>
+      <div class="card__body">
+        <div class="exam-list" id="lecExamList"><div class="empty">Loading…</div></div>
+      </div>
+    </section>
+
     <section class="card">
       <div class="card__head">
-        <span class="card__title">Student submissions</span>
+        <span class="card__title">Freeform submissions</span>
         <button class="btn btn-ghost btn-sm" id="refreshBtn">↻ Refresh</button>
       </div>
       <div class="card__body">

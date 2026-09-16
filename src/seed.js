@@ -5,6 +5,10 @@
  * can be explored (and access control demonstrated) without registering
  * anyone by hand. Runs only if the users table is empty.
  *
+ * Safe to run from several serverless instances starting at once: every
+ * insert ignores a row that already exists, so a race creates each account
+ * exactly once.
+ *
  * The accounts are chosen to show department + level scoping clearly:
  *
  *   Mr Aluko    (CS, teaches ND1 & ND2)  -> sees Chioma, Tunde
@@ -17,20 +21,11 @@
 const bcrypt = require("bcryptjs");
 const db = require("./db");
 
-function seed() {
-  const count = db.prepare("SELECT COUNT(*) AS n FROM users").get().n;
-  if (count > 0) return; // already seeded
+async function seed() {
+  const { n } = await db.get("SELECT COUNT(*) AS n FROM users");
+  if (n > 0) return; // already seeded
 
-  const hash = (pw) => bcrypt.hashSync(pw, 10);
-  const PW = hash("codesit123");
-
-  const insertUser = db.prepare(`
-    INSERT INTO users (username, password, role, full_name, matric_number, staff_id, department, level)
-    VALUES (@username, @password, @role, @full_name, @matric_number, @staff_id, @department, @level)
-  `);
-  const insertLevel = db.prepare(
-    "INSERT OR IGNORE INTO lecturer_levels (lecturer_id, level) VALUES (?, ?)"
-  );
+  const PW = await bcrypt.hash("codesit123", 10);
 
   const students = [
     { username: "chioma", full_name: "Chioma Obi",       matric: "CS/ND/2024/045",  dept: "Computer Science", level: "ND1" },
@@ -46,22 +41,24 @@ function seed() {
     { username: "engr_musa", full_name: "Engr. Musa Danladi",  staff: "STAFF/CE/001", dept: "Computer Engineering", levels: ["ND1", "ND2"] },
   ];
 
-  const tx = db.transaction(() => {
+  const insertUser = `
+    INSERT INTO users (username, password, role, full_name, matric_number, staff_id, department, level)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT (username) DO NOTHING
+  `;
+
+  await db.transaction(async (tx) => {
     for (const s of students) {
-      insertUser.run({
-        username: s.username, password: PW, role: "student", full_name: s.full_name,
-        matric_number: s.matric, staff_id: "", department: s.dept, level: s.level,
-      });
+      await tx.run(insertUser, [s.username, PW, "student", s.full_name, s.matric, "", s.dept, s.level]);
     }
     for (const l of lecturers) {
-      const info = insertUser.run({
-        username: l.username, password: PW, role: "lecturer", full_name: l.full_name,
-        matric_number: "", staff_id: l.staff, department: l.dept, level: "",
-      });
-      for (const lvl of l.levels) insertLevel.run(info.lastInsertRowid, lvl);
+      await tx.run(insertUser, [l.username, PW, "lecturer", l.full_name, "", l.staff, l.dept, ""]);
+      const { id } = await tx.get("SELECT id FROM users WHERE username = ?", [l.username]);
+      for (const lvl of l.levels) {
+        await tx.run("INSERT INTO lecturer_levels (lecturer_id, level) VALUES (?, ?) ON CONFLICT DO NOTHING", [id, lvl]);
+      }
     }
   });
-  tx();
 
   console.log("✓ Seeded demo accounts (password for all: codesit123)");
 }

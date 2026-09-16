@@ -31,7 +31,32 @@ require(['vs/editor/editor.main'], async function () {
   loadMe();
   await loadStats();
   loadSubmissions();
+  loadExams();
 });
+
+// ---- My exams (overview strip; full authoring lives in /exam-builder) ----
+async function loadExams() {
+  const { data } = await api('/api/exams', 'GET');
+  const list = $('lecExamList');
+  if (!Array.isArray(data) || !data.length) {
+    list.innerHTML = '<div class="empty">No exams yet — <a href="/exam-builder">set your first one</a>.</div>';
+    return;
+  }
+  list.innerHTML = data.map((e) => {
+    const statusTag = e.published
+      ? `<span class="status-tag live">Live</span>`
+      : `<span class="status-tag draft">Draft</span>`;
+    return `
+      <div class="exam-card">
+        <div class="grow">
+          <div class="ttl">${escapeHtml(e.title)} ${statusTag}</div>
+          <div class="meta">${e.level} · ${e.question_count} question${e.question_count === 1 ? '' : 's'} · ${e.total_marks} marks · ${e.submitted_count}/${e.cohort_size} handed in${e.sitting_count ? ` · ${e.sitting_count} sitting now` : ''}</div>
+        </div>
+        <a class="btn btn-ghost btn-sm" href="/exam-results?exam=${e.id}">Results</a>
+        ${e.published ? '' : `<a class="btn btn-ghost btn-sm" href="/exam-builder?exam=${e.id}">Edit</a>`}
+      </div>`;
+  }).join('');
+}
 
 async function loadMe() {
   const { data } = await api('/api/me', 'GET');

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Results · CodeSit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="wordmark wordmark--light">Code<span class="spark">.</span>Sit</div>
+    <div class="topbar__right">
+      <span class="topbar__user">Signed in as <b id="whoami">…</b></span>
+      <button class="btn btn-ink btn-sm" id="logoutBtn">Log out</button>
+    </div>
+  </header>
+
+  <div class="page">
+    <nav class="navstrip">
+      <a href="/lecturer">Dashboard</a>
+      <a href="/exam-builder">Set an exam</a>
+    </nav>
+
+    <section class="scope-card">
+      <div class="metric" style="min-width:200px">
+        <div class="n" id="examTitle" style="font-size:20px">—</div>
+        <div class="l" id="examMeta">—</div>
+      </div>
+      <div class="divider"></div>
+      <div class="metric"><div class="n" id="sCohort">0</div><div class="l">Cohort</div></div>
+      <div class="divider"></div>
+      <div class="metric"><div class="n" id="sSubmitted">0</div><div class="l">Handed in</div></div>
+      <div class="divider"></div>
+      <div class="metric"><div class="n" id="sSitting">0</div><div class="l">Sitting now</div></div>
+      <div class="divider"></div>
+      <div class="metric"><div class="n" id="sAvg">0%</div><div class="l">Average</div></div>
+      <span class="grow" style="flex:1"></span>
+      <a class="btn btn-ghost btn-sm" id="csvLink" href="#">⬇ Export CSV</a>
+      <button class="btn btn-ink btn-sm" id="togglePublish">…</button>
+    </section>
+
+    <section class="card">
+      <div class="card__head"><span class="card__title">Results</span></div>
+      <div class="card__body">
+        <table>
+          <thead>
+            <tr><th>Student</th><th>Level</th><th>Status</th><th>Score</th><th>Submitted</th><th></th></tr>
+          </thead>
+          <tbody id="resultsBody"><tr><td colspan="6"><div class="empty">Loading…</div></td></tr></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <!-- One student's marked paper -->
+  <div class="modal" id="modal">
+    <div class="modal__box" style="max-width:900px">
+      <div class="modal__head">
+        <h3 id="modalTitle">Paper</h3>
+        <button class="x" id="closeModal">✕</button>
+      </div>
+      <div class="modal__body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="/js/exam-results.js"></script>
+</body>
+</html>

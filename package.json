@@ -6,17 +6,38 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
+    "test": "node --test test/*.test.js",
     "build:landing": "npm --prefix landing install && npm --prefix landing run build",
-    "build": "npm run build:landing"
+    "build": "npm run build:landing",
+    "vercel-build": "npm run build:landing",
+    "sandbox:setup": "node scripts/setup-sandbox.js"
   },
-  "keywords": ["exam", "coding", "education", "ide", "assessment", "codesit"],
+  "keywords": [
+    "exam",
+    "coding",
+    "education",
+    "ide",
+    "assessment",
+    "codesit"
+  ],
   "author": "Oyinloluwa Daniel Majonagbe",
   "license": "MIT",
   "dependencies": {
+    "@vercel/functions": "^3.9.7",
+    "@vercel/sandbox": "^3.3.0",
     "axios": "^1.7.2",
     "bcryptjs": "^2.4.3",
-    "better-sqlite3": "^11.3.0",
+    "dotenv": "^17.4.2",
     "express": "^4.19.2",
-    "express-session": "^1.18.0"
+    "express-rate-limit": "^8.7.0",
+    "express-session": "^1.18.0",
+    "helmet": "^8.3.0",
+    "pg": "^8.23.0"
+  },
+  "optionalDependencies": {
+    "better-sqlite3": "^11.3.0"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }

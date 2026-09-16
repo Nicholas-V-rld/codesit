@@ -9,3 +9,10 @@ database/*.db-wal
 .DS_Store
 .vscode/
 .idea/
+# Vercel
+.vercel
+.env*
+!.env.example
+
+# Local Claude Code settings and worktrees
+.claude/

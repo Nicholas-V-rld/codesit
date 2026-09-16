@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Result · CodeSit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="wordmark wordmark--light">Code<span class="spark">.</span>Sit</div>
+    <div class="topbar__right">
+      <span class="topbar__user">Signed in as <b id="whoami">…</b></span>
+      <a class="btn btn-ink btn-sm" href="/student">Back to workspace</a>
+    </div>
+  </header>
+
+  <div class="page">
+    <div class="notice" id="manualNotice" style="display:none">
+      Part of this paper could not be marked automatically (the code runner was unreachable when it was handed in). Your lecturer will mark it by hand — the score below will update.
+    </div>
+
+    <section class="score-hero">
+      <div>
+        <div class="big" id="scoreBig">—</div>
+        <div class="of" id="scoreOf">out of —</div>
+      </div>
+      <div class="grow">
+        <h1 id="examTitle">—</h1>
+        <div class="sub" id="examSub">—</div>
+        <div class="bar"><i id="scoreBar" style="width:0%"></i></div>
+      </div>
+    </section>
+
+    <div id="questions"></div>
+  </div>
+
+  <script src="/js/result.js"></script>
+</body>
+</html>

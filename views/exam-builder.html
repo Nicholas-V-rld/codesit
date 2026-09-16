@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Set an exam · CodeSit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="wordmark wordmark--light">Code<span class="spark">.</span>Sit</div>
+    <div class="topbar__right">
+      <span class="topbar__user">Signed in as <b id="whoami">…</b></span>
+      <button class="btn btn-ink btn-sm" id="logoutBtn">Log out</button>
+    </div>
+  </header>
+
+  <div class="page">
+    <nav class="navstrip">
+      <a href="/lecturer">Dashboard</a>
+      <a href="/exam-builder" class="on">Set an exam</a>
+    </nav>
+
+    <div class="notice" id="lockedNotice" style="display:none">
+      This exam is live, so its questions and marking scheme are locked. Unpublish it from the dashboard first if you need to change them.
+    </div>
+
+    <section class="card" style="margin-bottom:16px">
+      <div class="card__head"><span class="card__title" id="formTitle">New exam</span></div>
+      <div class="card__body">
+        <div class="row-2">
+          <div class="field">
+            <label for="title">Title</label>
+            <input class="input" id="title" placeholder="e.g. Midterm — Arrays &amp; Loops" />
+          </div>
+          <div class="field">
+            <label for="level">Level</label>
+            <select class="input" id="level"></select>
+          </div>
+        </div>
+        <div class="row-2">
+          <div class="field">
+            <label for="duration">Duration (minutes)</label>
+            <input class="input" id="duration" type="number" min="5" max="300" value="60" />
+          </div>
+          <div class="field">
+            <label for="instructions">Instructions (optional, shown to students)</label>
+            <input class="input" id="instructions" placeholder="e.g. Closed book. No internet searches." />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="builder" id="questions"></div>
+
+    <button class="btn btn-ghost" id="addQuestion" style="margin-top:12px">+ Add question</button>
+
+    <div class="sticky-actions">
+      <span id="totalMarks" style="font-family:var(--font-mono); font-size:13px; color:var(--muted)">0 marks total</span>
+      <span class="grow" style="flex:1"></span>
+      <button class="btn btn-ghost" id="saveDraftBtn">Save draft</button>
+      <button class="btn btn-primary" id="publishBtn">Save &amp; publish</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="/js/exam-builder.js"></script>
+</body>
+</html>

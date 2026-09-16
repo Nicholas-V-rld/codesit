@@ -9,13 +9,13 @@
  *  GET  /api/meta       departments / levels / languages for the forms
  */
 
-const express = require("express");
 const bcrypt = require("bcryptjs");
 const db = require("../db");
+const { asyncRouter } = require("../lib/router");
 const { requireAuth } = require("../middleware/auth");
 const { DEPARTMENTS, LEVELS, LANGUAGES, ROLES } = require("../config");
 
-const router = express.Router();
+const router = asyncRouter();
 
 const validLevels = LEVELS.map((l) => l.value);
 const validDepts = DEPARTMENTS;
@@ -30,7 +30,7 @@ router.get("/meta", (req, res) => {
 });
 
 // ---- Register ----
-router.post("/register", (req, res) => {
+router.post("/register", async (req, res) => {
   const b = req.body || {};
   const role = b.role;
   const username = (b.username || "").trim().toLowerCase();
@@ -47,7 +47,7 @@ router.post("/register", (req, res) => {
   if (!validDepts.includes(b.department))
     return res.status(400).json({ error: "Select a valid department." });
 
-  const exists = db.prepare("SELECT id FROM users WHERE username = ?").get(username);
+  const exists = await db.get("SELECT id FROM users WHERE username = ?", [username]);
   if (exists) return res.status(409).json({ error: "That username is already taken." });
 
   if (role === ROLES.STUDENT) {
@@ -61,42 +61,48 @@ router.post("/register", (req, res) => {
     b._levels = clean;
   }
 
-  const passwordHash = bcrypt.hashSync(password, 10);
+  // Async, so hashing does not hold up every other request while it works.
+  const passwordHash = await bcrypt.hash(password, 10);
 
   try {
-    const tx = db.transaction(() => {
-      const info = db.prepare(`
+    await db.transaction(async (tx) => {
+      const userId = await tx.insert(`
         INSERT INTO users (username, password, role, full_name, matric_number, staff_id, department, level)
-        VALUES (@username, @password, @role, @full_name, @matric_number, @staff_id, @department, @level)
-      `).run({
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `, [
         username,
-        password: passwordHash,
+        passwordHash,
         role,
-        full_name: (b.full_name || "").trim(),
-        matric_number: role === ROLES.STUDENT ? (b.matric_number || "").trim() : "",
-        staff_id: role === ROLES.LECTURER ? (b.staff_id || "").trim() : "",
-        department: b.department,
-        level: role === ROLES.STUDENT ? b.level : "",
-      });
+        (b.full_name || "").trim(),
+        role === ROLES.STUDENT ? (b.matric_number || "").trim() : "",
+        role === ROLES.LECTURER ? (b.staff_id || "").trim() : "",
+        b.department,
+        role === ROLES.STUDENT ? b.level : "",
+      ]);
       if (role === ROLES.LECTURER) {
-        const insLevel = db.prepare("INSERT OR IGNORE INTO lecturer_levels (lecturer_id, level) VALUES (?, ?)");
-        for (const lvl of b._levels) insLevel.run(info.lastInsertRowid, lvl);
+        for (const lvl of b._levels) {
+          await tx.run(
+            "INSERT INTO lecturer_levels (lecturer_id, level) VALUES (?, ?) ON CONFLICT DO NOTHING",
+            [userId, lvl]
+          );
+        }
       }
-      return info.lastInsertRowid;
     });
-    tx();
     res.json({ ok: true });
   } catch (e) {
+    // Two people claiming the same username at the same instant: the check
+    // above passed for both, and the UNIQUE rule stopped the second.
+    if (db.isUniqueViolation(e)) return res.status(409).json({ error: "That username is already taken." });
     res.status(500).json({ error: "Could not create the account. Please try again." });
   }
 });
 
 // ---- Login ----
-router.post("/login", (req, res) => {
+router.post("/login", async (req, res) => {
   const username = (req.body.username || "").trim().toLowerCase();
   const password = req.body.password || "";
-  const user = db.prepare("SELECT * FROM users WHERE username = ?").get(username);
-  if (!user || !bcrypt.compareSync(password, user.password))
+  const user = await db.get("SELECT * FROM users WHERE username = ?", [username]);
+  if (!user || !(await bcrypt.compare(password, user.password)))
     return res.status(401).json({ error: "Wrong username or password." });
 
   req.session.userId = user.id;
@@ -110,33 +116,33 @@ router.post("/logout", (req, res) => {
 });
 
 // ---- Current user ----
-router.get("/me", requireAuth, (req, res) => {
-  const user = db.prepare(`
+router.get("/me", requireAuth, async (req, res) => {
+  const user = await db.get(`
     SELECT id, username, role, full_name, matric_number, staff_id, department, level
     FROM users WHERE id = ?
-  `).get(req.session.userId);
+  `, [req.session.userId]);
   if (!user) return res.status(404).json({ error: "Account not found." });
 
   if (user.role === ROLES.LECTURER) {
-    user.levels = db.prepare("SELECT level FROM lecturer_levels WHERE lecturer_id = ?")
-      .all(user.id).map((r) => r.level);
+    user.levels = (await db.all("SELECT level FROM lecturer_levels WHERE lecturer_id = ?", [user.id]))
+      .map((r) => r.level);
   }
   res.json(user);
 });
 
 // ---- Update profile (student: full name + matric only) ----
-router.put("/profile", requireAuth, (req, res) => {
-  const user = db.prepare("SELECT role FROM users WHERE id = ?").get(req.session.userId);
+router.put("/profile", requireAuth, async (req, res) => {
+  const user = await db.get("SELECT role FROM users WHERE id = ?", [req.session.userId]);
   if (!user) return res.status(404).json({ error: "Account not found." });
 
   const full_name = (req.body.full_name || "").trim();
   if (!full_name) return res.status(400).json({ error: "Name cannot be empty." });
 
   if (user.role === ROLES.STUDENT) {
-    db.prepare("UPDATE users SET full_name = ?, matric_number = ? WHERE id = ?")
-      .run(full_name, (req.body.matric_number || "").trim(), req.session.userId);
+    await db.run("UPDATE users SET full_name = ?, matric_number = ? WHERE id = ?",
+      [full_name, (req.body.matric_number || "").trim(), req.session.userId]);
   } else {
-    db.prepare("UPDATE users SET full_name = ? WHERE id = ?").run(full_name, req.session.userId);
+    await db.run("UPDATE users SET full_name = ? WHERE id = ?", [full_name, req.session.userId]);
   }
   res.json({ ok: true });
 });

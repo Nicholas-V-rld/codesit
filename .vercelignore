@@ -1,0 +1,12 @@
+# Never uploaded to Vercel.
+.claude
+.git
+.env
+.env.*
+database
+output
+node_modules
+landing/node_modules
+landing/dist
+*.log
+.DS_Store
