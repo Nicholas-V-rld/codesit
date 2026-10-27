@@ -1,5 +1,7 @@
 # CodeSit
 
+> Built by Daniel Oyinloluwa and Nicholas V. as a team.
+
 **Write code. Run it. Sit the exam.**
 
 An online coding examination platform. Lecturers set timed exams with
